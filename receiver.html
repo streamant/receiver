@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<!-- Streamant receiver page, version 1 (Oct 2026) -->
+<html><head><meta charset="utf-8"><title>Streamant Receiver</title>
+<link rel="stylesheet" href="stream3.css">
+<script src="https://www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
+</head><body>
+<cast-media-player></cast-media-player>
+<script>
+(function () {
+  var NS = 'urn:x-cast:app.streamant.caps';
+  var context = cast.framework.CastReceiverContext.getInstance();
+  var V = [
+    ['H.264 Main L3.1 720p30', 'video/mp4', 'avc1.4D401F', 1280, 720, 30],
+    ['H.264 High L4.0 1080p30', 'video/mp4', 'avc1.640028', 1920, 1080, 30],
+    ['H.264 High L4.1 1080p30', 'video/mp4', 'avc1.640029', 1920, 1080, 30],
+    ['H.264 High L4.1 720p60', 'video/mp4', 'avc1.640029', 1280, 720, 60],
+    ['H.264 High L4.2 1080p60', 'video/mp4', 'avc1.64002A', 1920, 1080, 60],
+    ['H.264 High L5.1 2160p30', 'video/mp4', 'avc1.640033', 3840, 2160, 30],
+    ['H.264 High L5.2 2160p60', 'video/mp4', 'avc1.640034', 3840, 2160, 60],
+    ['HEVC Main L4.1 1080p30', 'video/mp4', 'hvc1.1.6.L123.B0', 1920, 1080, 30],
+    ['HEVC Main L4.1 1080p60', 'video/mp4', 'hvc1.1.6.L123.B0', 1920, 1080, 60],
+    ['HEVC Main L5.1 2160p30', 'video/mp4', 'hvc1.1.6.L153.B0', 3840, 2160, 30],
+    ['HEVC Main L5.1 2160p60', 'video/mp4', 'hvc1.1.6.L153.B0', 3840, 2160, 60],
+    ['HEVC Main10 L5.1 2160p30', 'video/mp4', 'hvc1.2.4.L153.B0', 3840, 2160, 30],
+    ['VP9 P0 1080p30', 'video/webm', 'vp09.00.40.08', 1920, 1080, 30],
+    ['VP9 P0 2160p30', 'video/webm', 'vp09.00.51.08', 3840, 2160, 30],
+    ['VP9 P2 10-bit 2160p30', 'video/webm', 'vp09.02.51.10', 3840, 2160, 30],
+    ['AV1 Main 1080p30', 'video/mp4', 'av01.0.08M.08', 1920, 1080, 30],
+    ['Dolby Vision P5', 'video/mp4', 'dvh1.05.06', 3840, 2160, 30]
+  ];
+  var A = [
+    ['AAC-LC', 'audio/mp4', 'mp4a.40.2'],
+    ['HE-AAC', 'audio/mp4', 'mp4a.40.5'],
+    ['AC-3', 'audio/mp4', 'ac-3'],
+    ['E-AC-3', 'audio/mp4', 'ec-3'],
+    ['Dolby Atmos (E-AC-3 JOC)', 'audio/mp4', 'mp4a.a6'],
+    ['FLAC', 'audio/flac', 'flac'],
+    ['Opus', 'audio/ogg', 'opus'],
+    ['MP3', 'audio/mpeg', 'mp3']
+  ];
+  var vid = document.createElement('video');
+  function cdt(mime, codecs, w, h, fps) {
+    try {
+      if (w) { return !!context.canDisplayType(mime, codecs, w, h, fps); }
+      return !!context.canDisplayType(mime, codecs);
+    } catch (e) { return 'error'; }
+  }
+  function mse(mime, codecs) {
+    try { return window.MediaSource ? MediaSource.isTypeSupported(mime + '; codecs="' + codecs + '"') : 'n/a'; } catch (e) { return 'error'; }
+  }
+  function cpt(mime, codecs) {
+    try { return vid.canPlayType(mime + '; codecs="' + codecs + '"') || 'no'; } catch (e) { return 'error'; }
+  }
+  function buildReport() {
+    var tests = [], i, t;
+    for (i = 0; i < V.length; i++) {
+      t = V[i];
+      tests.push({ label: t[0], cdt: cdt(t[1], t[2], t[3], t[4], t[5]), mse: mse(t[1], t[2]), cpt: cpt(t[1], t[2]) });
+    }
+    for (i = 0; i < A.length; i++) {
+      t = A[i];
+      tests.push({ label: t[0], cdt: cdt(t[1], t[2]), mse: mse(t[1], t[2]), cpt: cpt(t[1], t[2]) });
+    }
+    var caps = null;
+    try { caps = context.getDeviceCapabilities(); } catch (e) { caps = null; }
+    return { tests: tests, caps: caps, cores: navigator.hardwareConcurrency, ua: navigator.userAgent, screen: screen.width + 'x' + screen.height };
+  }
+  context.addCustomMessageListener(NS, function (event) {
+    var data = event.data || {};
+    var report = buildReport();
+    report.type = 'CAPS';
+    report.requestId = data.requestId;
+    context.sendCustomMessage(NS, event.senderId, report);
+  });
+  context.start();
+})();
+</script>
+</body></html>
