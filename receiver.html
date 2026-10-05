@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Streamant receiver page, version 3 (Oct 5, 2026): logo and texts as an overlay in the page itself -->
+<!-- Streamant receiver page, version 4 (Oct 5, 2026): logo and texts as an overlay in the page itself -->
 <html><head><meta charset="utf-8"><title>Streamant Receiver</title>
 
 <script src="https://www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
@@ -11,9 +11,10 @@
   #spin { display: none; position: absolute; left: 50%; bottom: calc(15% + 46px); width: 30px; height: 30px; margin-left: -15px; border: 4px solid #3a3a3a; border-top-color: #CACCCA; border-radius: 50%; animation: brandspin 1s linear infinite; }
   #brand.loading #spin { display: block; }
   @keyframes brandspin { to { transform: rotate(360deg); } }
+  #ver { position: absolute; right: 10px; bottom: 8px; color: #666; font: 12px Arial, Helvetica, sans-serif; }
 </style>
 </head><body>
-<div id="brand"><div id="spin"></div><span id="brandText">Streamant is Ready to Play</span></div>
+<div id="brand"><div id="spin"></div><span id="brandText">Streamant is Ready to Play</span><div id="ver">v4</div></div>
 <cast-media-player></cast-media-player>
 <script>
 (function () {
@@ -91,6 +92,7 @@
     var hideBrand = function () { brand.className = 'hide'; };
     if (E.PLAYER_LOADING) { pm.addEventListener(E.PLAYER_LOADING, function () { showBrand('Loading... please wait'); }); }
     if (E.PLAYING) { pm.addEventListener(E.PLAYING, hideBrand); }
+    pm.setMessageInterceptor(cast.framework.messages.MessageType.LOAD, function (req) { showBrand('Loading... please wait'); return req; });
     if (E.MEDIA_FINISHED) { pm.addEventListener(E.MEDIA_FINISHED, function () { showBrand('Streamant is Ready to Play'); }); }
     if (E.REQUEST_STOP) { pm.addEventListener(E.REQUEST_STOP, function () { showBrand('Streamant is Ready to Play'); }); }
   } catch (e) { }
