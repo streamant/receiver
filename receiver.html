@@ -66,7 +66,8 @@
     try { return vid.canPlayType(mime + '; codecs="' + codecs + '"') || 'no'; } catch (e) { return 'error'; }
   }
   var hdcpVersion = null;
-  try { Promise.resolve(cast.__platform__.display.getHdcpVersion()).then(function (v) { hdcpVersion = v; capsCache = null; }).catch(function () { }); } catch (e) { }
+  // v32-test: HDCP check off on load
+  if (false) try { Promise.resolve(cast.__platform__.display.getHdcpVersion()).then(function (v) { hdcpVersion = v; capsCache = null; }).catch(function () { }); } catch (e) { }
   function buildReport() {
     var tests = [], i, t;
     for (i = 0; i < V.length; i++) {
@@ -83,7 +84,7 @@
   }
   var capsCache = null;
   function getCapsOnce() { if (!capsCache) { capsCache = buildReport(); } return capsCache; }
-  setTimeout(function () { try { getCapsOnce(); } catch (e) { } }, 800);
+  // v32-test: nothing runs on load; the report is built only when Streamant asks for it
   var swappedActiveId = null;
   var swapSeq = 0;
   context.addCustomMessageListener(NS, function (event) {
@@ -201,7 +202,7 @@ if (held.length) {
     if (E.REQUEST_STOP) { pm.addEventListener(E.REQUEST_STOP, function () { showBrand('Streamant is Ready to Play'); }); }
   } catch (e) { }
   context.start();
-// Streamant (v31): enlarge time text (0:11, 1:05:30) and the movie name; smaller multipliers on touch screens (Hubs)
+// Streamant (v31, v32-test): enlarge time text (0:11, 1:05:30) and the movie name; smaller multipliers on touch screens (Hubs)
 (function () {
   var TIME = /^\s*-?\d{1,2}:\d{2}(:\d{2})?\s*$/;
   function touchDevice() {
