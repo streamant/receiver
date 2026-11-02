@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Streamant diag</title>
+<style>
+html,body{margin:0;background:#0a2a8c;color:#fff;font-family:Arial,sans-serif}
+#t{font-size:44px;font-weight:bold;padding:24px 40px 8px;color:#ffe14d}
+#log{font-size:34px;line-height:1.35;padding:0 40px;white-space:pre-wrap}
+.bad{color:#ff7b7b;font-weight:bold}
+.ok{color:#8dff8d}
+</style>
+</head>
+<body>
+<div id="t">STREAMANT DIAG d1</div>
+<div id="log"></div>
+<script>
+var T0 = new Date().getTime();
+var logEl = document.getElementById('log');
+function say(msg, cls) {
+  var s = ((new Date().getTime() - T0) / 1000).toFixed(1);
+  var d = document.createElement('div');
+  if (cls) d.className = cls;
+  d.appendChild(document.createTextNode(s + 's  ' + msg));
+  logEl.appendChild(d);
+}
+window.onerror = function (m, src, line, col) {
+  say('JS ERROR: ' + m + ' @' + String(src).split('/').pop() + ':' + line + ':' + col, 'bad');
+};
+window.addEventListener('unhandledrejection', function (e) {
+  say('PROMISE REJECT: ' + (e.reason && e.reason.message ? e.reason.message : e.reason), 'bad');
+});
+say('1 page HTML+JS running', 'ok');
+say('host: ' + location.host);
+say('UA: ' + navigator.userAgent.replace(/Mozilla\/5.0 /, '').substring(0, 90));
+say('screen: ' + screen.width + 'x' + screen.height + '  dpr ' + window.devicePixelRatio);
+
+var s = document.createElement('script');
+s.src = 'https://www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js';
+s.onload = function () {
+  say('2 CAF script loaded', 'ok');
+  try {
+    say('3 typeof cast.framework = ' + typeof (window.cast && cast.framework));
+    var ctx = cast.framework.CastReceiverContext.getInstance();
+    say('4 got context', 'ok');
+    var opts = new cast.framework.CastReceiverOptions();
+    opts.disableIdleTimeout = true;
+    ctx.addEventListener(cast.framework.system.EventType.READY, function () { say('6 READY event', 'ok'); });
+    ctx.addEventListener(cast.framework.system.EventType.SENDER_CONNECTED, function () { say('7 sender connected', 'ok'); });
+    ctx.start(opts);
+    say('5 context.start() returned', 'ok');
+  } catch (e) {
+    say('CAF EXCEPTION: ' + e, 'bad');
+  }
+};
+s.onerror = function () { say('2 CAF script FAILED to load', 'bad'); };
+document.head.appendChild(s);
+
+var marks = [3, 6, 10, 20, 40];
+for (var i = 0; i < marks.length; i++) {
+  (function (n) { setTimeout(function () { say('still alive at ' + n + 's'); }, n * 1000); })(marks[i]);
+}
+</script>
+</body>
+</html>
